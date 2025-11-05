@@ -1,0 +1,3 @@
+com\nnk\springboot\services\RatingServiceTest.class
+com\nnk\springboot\validation\AtLeastOneRatingPresentValidatorTest.class
+com\nnk\springboot\controllers\RatingControllerTest.class

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RatingController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">spring-boot-skeleton</a> &gt; <a href="index.source.html" class="el_package">com.nnk.springboot.controllers</a> &gt; <span class="el_source">RatingController.java</span></div><h1>RatingController.java</h1><pre class="source lang-java linenums">package com.nnk.springboot.controllers;
+
+import com.nnk.springboot.domain.Rating;
+import com.nnk.springboot.services.IRatingService;
+import jakarta.validation.Valid;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Optional;
+
+@Controller
+@RequestMapping(&quot;/rating&quot;)
+public class RatingController {
+
+    private final IRatingService ratingService;
+
+<span class="fc" id="L20">    public RatingController(IRatingService ratingService) {</span>
+<span class="fc" id="L21">        this.ratingService = ratingService;</span>
+<span class="fc" id="L22">    }</span>
+
+    @GetMapping(&quot;/list&quot;)
+    public String list(Model model) {
+<span class="fc" id="L26">        model.addAttribute(&quot;ratings&quot;, ratingService.findAll());</span>
+<span class="fc" id="L27">        return &quot;rating/list&quot;;</span>
+    }
+
+    @GetMapping(&quot;/add&quot;)
+    public String addForm(Model model) {
+<span class="fc" id="L32">        model.addAttribute(&quot;rating&quot;, new Rating());</span>
+<span class="fc" id="L33">        return &quot;rating/add&quot;;</span>
+    }
+
+    @PostMapping(&quot;/validate&quot;)
+    public String validate(@Valid @ModelAttribute(&quot;rating&quot;) Rating rating,
+                           BindingResult result,
+                           RedirectAttributes redirectAttributes) {
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (result.hasErrors()) {</span>
+<span class="fc" id="L41">            return &quot;rating/add&quot;;</span>
+        }
+
+        try {
+<span class="fc" id="L45">            ratingService.create(rating);</span>
+<span class="fc" id="L46">            redirectAttributes.addFlashAttribute(&quot;successMessage&quot;, &quot;Rating added successfully&quot;);</span>
+<span class="fc" id="L47">            return &quot;redirect:/rating/list&quot;;</span>
+<span class="fc" id="L48">        } catch (Exception e) {</span>
+<span class="fc" id="L49">            redirectAttributes.addFlashAttribute(&quot;errorMessage&quot;, e.getMessage());</span>
+<span class="fc" id="L50">            return &quot;redirect:/rating/add&quot;;</span>
+        }
+    }
+
+    @GetMapping(&quot;/update/{id}&quot;)
+    public String showUpdateForm(@PathVariable(&quot;id&quot;) Integer id, Model model, RedirectAttributes redirectAttributes) {
+<span class="fc" id="L56">        Optional&lt;Rating&gt; ratingOpt = ratingService.findById(id);</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (ratingOpt.isEmpty()) {</span>
+<span class="fc" id="L58">            redirectAttributes.addFlashAttribute(&quot;errorMessage&quot;, &quot;Rating introuvable : &quot; + id);</span>
+<span class="fc" id="L59">            return &quot;redirect:/rating/list&quot;;</span>
+        }
+<span class="fc" id="L61">        model.addAttribute(&quot;rating&quot;, ratingOpt.get());</span>
+<span class="fc" id="L62">        return &quot;rating/update&quot;;</span>
+    }
+
+    @PostMapping(&quot;/update/{id}&quot;)
+    public String update(@PathVariable Integer id,
+                         @Valid @ModelAttribute(&quot;rating&quot;) Rating rating,
+                         BindingResult result,
+                         RedirectAttributes redirectAttributes) {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (result.hasErrors()) {</span>
+<span class="fc" id="L71">            rating.setId(id);</span>
+<span class="fc" id="L72">            return &quot;rating/update&quot;;</span>
+        }
+
+        try {
+<span class="fc" id="L76">            ratingService.update(id, rating);</span>
+<span class="fc" id="L77">            redirectAttributes.addFlashAttribute(&quot;successMessage&quot;, &quot;Rating updated successfully&quot;);</span>
+<span class="fc" id="L78">            return &quot;redirect:/rating/list&quot;;</span>
+<span class="fc" id="L79">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L80">            redirectAttributes.addFlashAttribute(&quot;errorMessage&quot;, e.getMessage());</span>
+<span class="fc" id="L81">            return &quot;redirect:/rating/update/&quot; + id;</span>
+        }
+    }
+
+    @PostMapping(&quot;/delete/{id}&quot;)
+    public String delete(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+<span class="fc" id="L88">            ratingService.deleteById(id);</span>
+<span class="fc" id="L89">            redirectAttributes.addFlashAttribute(&quot;successMessage&quot;, &quot;Rating deleted successfully&quot;);</span>
+<span class="fc" id="L90">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L91">            redirectAttributes.addFlashAttribute(&quot;errorMessage&quot;, &quot;Rating not found&quot;);</span>
+<span class="fc" id="L92">        }</span>
+<span class="fc" id="L93">        return &quot;redirect:/rating/list&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
