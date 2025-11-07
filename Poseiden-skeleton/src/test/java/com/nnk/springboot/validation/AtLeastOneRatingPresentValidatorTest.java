@@ -11,9 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Tests pour le validateur personnalisé AtLeastOneRatingPresent.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AtLeastOneRatingPresentValidator - Tests unitaires")
 class AtLeastOneRatingPresentValidatorTest {
@@ -22,7 +19,6 @@ class AtLeastOneRatingPresentValidatorTest {
 
     @Mock
     private ConstraintValidatorContext context;
-
     @BeforeEach
     void setUp() {
         validator = new AtLeastOneRatingPresentValidator();

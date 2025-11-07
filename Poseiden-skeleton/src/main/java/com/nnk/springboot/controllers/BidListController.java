@@ -1,55 +1,121 @@
 package com.nnk.springboot.controllers;
 
 import com.nnk.springboot.domain.BidList;
+import com.nnk.springboot.services.IBidListService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
-
+import java.util.List;
 
 @Controller
+@RequestMapping("/bidList")
 public class BidListController {
-    // TODO: Inject Bid service
 
-    @RequestMapping("/bidList/list")
-    public String home(Model model)
-    {
-        // TODO: call service find all bids to show to the view
+    private static final Logger logger = LoggerFactory.getLogger(BidListController.class);
+    private final IBidListService bidListService;
+
+    public BidListController(IBidListService bidListService) {
+        this.bidListService = bidListService;
+    }
+
+    @GetMapping("/list")
+    public String home(Model model) {
+        List<BidList> bidLists = bidListService.findAll();
+        model.addAttribute("bidLists", bidLists);
         return "bidList/list";
     }
 
-    @GetMapping("/bidList/add")
-    public String addBidForm(BidList bid) {
+    @GetMapping("/add")
+    public String addBidForm(Model model) {
+        model.addAttribute("bidList", new BidList());
         return "bidList/add";
     }
 
-    @PostMapping("/bidList/validate")
-    public String validate(@Valid BidList bid, BindingResult result, Model model) {
-        // TODO: check data valid and save to db, after saving return bid list
-        return "bidList/add";
+    @PostMapping("/validate")
+    public String validate(@Valid @ModelAttribute BidList bidList,
+                          BindingResult result,
+                          Model model,
+                          RedirectAttributes ra) {
+        logger.info("Creating BidList: account={}, type={}", bidList.getAccount(), bidList.getType());
+
+        if (result.hasErrors()) {
+            logger.warn("Validation errors: {}", result.getAllErrors());
+            return "bidList/add";
+        }
+
+        try {
+            BidList saved = bidListService.create(bidList);
+            logger.info("BidList created: ID={}", saved.getBidListId());
+            ra.addFlashAttribute("successMessage", "BidList created successfully");
+            return "redirect:/bidList/list";
+        } catch (IllegalArgumentException e) {
+            logger.error("Error creating BidList", e);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "bidList/add";
+        }
     }
 
-    @GetMapping("/bidList/update/{id}")
-    public String showUpdateForm(@PathVariable("id") Integer id, Model model) {
-        // TODO: get Bid by Id and to model then show to the form
-        return "bidList/update";
+    @GetMapping("/update/{id}")
+    public String showUpdateForm(@PathVariable Integer id, Model model, RedirectAttributes ra) {
+        logger.info("Loading BidList for update: ID={}", id);
+
+        try {
+            BidList bidList = bidListService.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("BidList not found"));
+            model.addAttribute("bidList", bidList);
+            return "bidList/update";
+        } catch (IllegalArgumentException e) {
+            logger.warn("BidList not found: ID={}", id);
+            ra.addFlashAttribute("errorMessage", "BidList not found");
+            return "redirect:/bidList/list";
+        }
     }
 
-    @PostMapping("/bidList/update/{id}")
-    public String updateBid(@PathVariable("id") Integer id, @Valid BidList bidList,
-                             BindingResult result, Model model) {
-        // TODO: check required fields, if valid call service to update Bid and return list Bid
-        return "redirect:/bidList/list";
+    @PostMapping("/update/{id}")
+    public String updateBid(@PathVariable Integer id,
+                           @Valid @ModelAttribute BidList bidList,
+                           BindingResult result,
+                           Model model,
+                           RedirectAttributes ra) {
+        logger.info("Updating BidList: ID={}", id);
+
+        if (result.hasErrors()) {
+            logger.warn("Validation errors: {}", result.getAllErrors());
+            bidList.setBidListId(id);
+            return "bidList/update";
+        }
+
+        try {
+            BidList updated = bidListService.update(id, bidList);
+            logger.info("BidList updated: ID={}", updated.getBidListId());
+            ra.addFlashAttribute("successMessage", "BidList updated successfully");
+            return "redirect:/bidList/list";
+        } catch (IllegalArgumentException e) {
+            logger.error("Error updating BidList", e);
+            bidList.setBidListId(id);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "bidList/update";
+        }
     }
 
-    @GetMapping("/bidList/delete/{id}")
-    public String deleteBid(@PathVariable("id") Integer id, Model model) {
-        // TODO: Find Bid by Id and delete the bid, return to Bid list
+    @PostMapping("/delete/{id}")
+    public String deleteBid(@PathVariable Integer id, RedirectAttributes ra) {
+        logger.info("Deleting BidList: ID={}", id);
+
+        try {
+            bidListService.deleteById(id);
+            logger.info("BidList deleted: ID={}", id);
+            ra.addFlashAttribute("successMessage", "BidList deleted successfully");
+        } catch (IllegalArgumentException e) {
+            logger.error("Error deleting BidList", e);
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/bidList/list";
     }
 }

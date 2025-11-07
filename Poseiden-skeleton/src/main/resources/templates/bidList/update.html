@@ -24,7 +24,15 @@
 			<div class="form-group">
 				<label for="type" class="col-sm-2 control-label">Type</label>
 				<div class="col-sm-10">
-					<input type="text" th:field="*{type}" id="type" placeholder="Type" class="col-4">
+					<select th:field="*{type}" id="type" class="col-4">
+						<option value="">-- Sélectionner --</option>
+						<option value="LIMIT">LIMIT</option>
+						<option value="MARKET">MARKET</option>
+						<option value="STOP">STOP</option>
+						<option value="STOP_LIMIT">STOP_LIMIT</option>
+						<option value="FILL_OR_KILL">FILL_OR_KILL</option>
+						<option value="ICEBERG">ICEBERG</option>
+					</select>
 					<p class="text-danger" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></p>
 				</div>
 			</div>
@@ -40,6 +48,7 @@
 			<div class="form-group">
 				<div class="col-sm-12">
 					<input type="hidden" th:field="*{id}">
+					<input type="hidden" th:field="*{version}">
 					<a class="btn btn-danger btn-sm" href="/bidList/list">Cancel</a>
 					<input class="btn btn-primary btn-sm" type="submit" value="Update Bid List">
 				</div>
