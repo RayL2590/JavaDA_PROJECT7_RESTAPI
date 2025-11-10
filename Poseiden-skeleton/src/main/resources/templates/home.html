@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title> Spring Boot </title>
+    <title> Poseidon </title>
 </head>
 <body>
-<h3> HOME PAGE </h3>
-<p>
-    <a href="/login">Login</a> or create one <a href="/user/list">User management</a>
-</p>
+<h3>Homepage</h3>
+<ul>
+    <li><a th:href="@{/login}">Se connecter</a></li>
+    <li><a th:href="@{/user/list}">Gestion des utilisateurs</a></li>
+    <li><a th:href="@{/bidList/list}">Bid List</a></li>
+    <li><a th:href="@{/curvePoint/list}">Curve Point</a></li>
+    <li><a th:href="@{/rating/list}">Rating</a></li>
+    <li><a th:href="@{/ruleName/list}">Rule Name</a></li>
+    <li><a th:href="@{/trade/list}">Trade</a></li>
+</ul>
 </body>
 </html>

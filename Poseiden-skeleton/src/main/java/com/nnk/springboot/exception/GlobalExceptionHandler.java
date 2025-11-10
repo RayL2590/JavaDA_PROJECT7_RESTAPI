@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -20,6 +21,7 @@ public class GlobalExceptionHandler {
         return "redirect:/error";
     }
 
+
     @ExceptionHandler(ConstraintViolationException.class)
     public String handleConstraintViolation(ConstraintViolationException e, RedirectAttributes redirectAttributes) {
         logger.error("ConstraintViolationException", e);
@@ -27,17 +29,19 @@ public class GlobalExceptionHandler {
         return "redirect:/error";
     }
 
+
     @ExceptionHandler(OptimisticLockingFailureException.class)
-    public String handleOptimisticLocking(OptimisticLockingFailureException e, RedirectAttributes ra) {
+    public String handleOptimisticLocking(OptimisticLockingFailureException e, Model model) {
         logger.error("OptimisticLockingFailureException", e);
-        ra.addFlashAttribute("errorMessage", "Data was modified by another user. Please retry.");
-        return "redirect:/bidList/list";
+        model.addAttribute("errorMessage", "Data was modified by another user. Please retry.");
+        return "error";
     }
 
+
     @ExceptionHandler(Exception.class)
-    public String handleGenericException(Exception e, RedirectAttributes redirectAttributes) {
+    public String handleGenericException(Exception e, Model model) {
         logger.error("Unexpected exception", e);
-        redirectAttributes.addFlashAttribute("errorMessage", "An unexpected error occurred");
-        return "redirect:/error";
+        model.addAttribute("errorMessage", "An unexpected error occurred");
+        return "error";
     }
 }

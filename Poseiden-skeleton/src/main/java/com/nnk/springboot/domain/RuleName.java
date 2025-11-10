@@ -50,6 +50,15 @@ public class RuleName {
     @Version
     private Long version;
 
+    @Transient
+    public String getSql() {
+        return this.sqlStr;
+    }
+
+    public void setSql(String sql) {
+        this.sqlStr = sql;
+    }
+
     public RuleName(String name, String description) {
         this.name = name;
         this.description = description;
