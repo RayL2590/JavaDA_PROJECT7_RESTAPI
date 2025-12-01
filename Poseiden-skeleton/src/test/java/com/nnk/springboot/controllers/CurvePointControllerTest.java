@@ -336,8 +336,8 @@ class CurvePointControllerTest {
         mockMvc.perform(post("/curvePoint/validate")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf())
                 .param("curveId", "1")
-                .param("term", "0.2500")  // 3 months
-                .param("value", "2.7500")) // 2.75%
+                .param("term", "0.2500")
+                .param("value", "2.7500"))
                 .andExpect(status().is3xxRedirection());
     }
 }

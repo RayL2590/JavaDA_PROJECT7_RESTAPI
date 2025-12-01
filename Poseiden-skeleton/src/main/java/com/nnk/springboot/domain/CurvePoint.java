@@ -46,8 +46,7 @@ public class CurvePoint {
     @Column(name = "creationDate")
     private LocalDateTime creationDate;
 
-    @Version
-    private Long version;
+    
 
     public CurvePoint(Integer curveId, BigDecimal term, BigDecimal value) {
         this.curveId = curveId;

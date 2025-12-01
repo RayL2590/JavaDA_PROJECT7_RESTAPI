@@ -3,6 +3,7 @@ package com.nnk.springboot.controllers;
 import com.nnk.springboot.domain.Rating;
 import com.nnk.springboot.services.IRatingService;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -45,6 +46,9 @@ public class RatingController {
             ratingService.create(rating);
             redirectAttributes.addFlashAttribute("successMessage", "Rating added successfully");
             return "redirect:/rating/list";
+        } catch (ConstraintViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "redirect:/rating/add";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/rating/add";
@@ -76,6 +80,9 @@ public class RatingController {
             ratingService.update(id, rating);
             redirectAttributes.addFlashAttribute("successMessage", "Rating updated successfully");
             return "redirect:/rating/list";
+        } catch (ConstraintViolationException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "redirect:/rating/update/" + id;
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/rating/update/" + id;

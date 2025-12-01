@@ -1,5 +1,6 @@
 package com.nnk.springboot.domain;
 
+import com.nnk.springboot.validation.ValidTradeData;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -9,7 +10,6 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Entity
 @Table(name = "trade")
+@ValidTradeData
 public class Trade {
 
     @Id
@@ -26,6 +27,7 @@ public class Trade {
 
     @NotBlank(message = "Account is mandatory")
     @Size(max = 30, message = "Account must be less than 30 characters")
+    @Pattern(regexp = "[A-Za-z0-9]{1,30}", message = "Account must be 1-30 letters or digits")
     @Column(name = "account", nullable = false, length = 30)
     private String account;
 
@@ -35,24 +37,20 @@ public class Trade {
     private String type;
 
     @DecimalMin(value = "0.01", message = "Buy quantity must be positive")
-    @Digits(integer = 10, fraction = 2, message = "Buy quantity must have at most 2 decimal places")
     @Column(name = "buy_quantity")
-    private BigDecimal buyQuantity;
+    private Double buyQuantity;
 
     @DecimalMin(value = "0.01", message = "Sell quantity must be positive")
-    @Digits(integer = 10, fraction = 2, message = "Sell quantity must have at most 2 decimal places")
     @Column(name = "sell_quantity")
-    private BigDecimal sellQuantity;
+    private Double sellQuantity;
 
     @DecimalMin(value = "0.0001", message = "Buy price must be positive")
-    @Digits(integer = 10, fraction = 4, message = "Buy price must have at most 4 decimal places")
     @Column(name = "buy_price")
-    private BigDecimal buyPrice;
+    private Double buyPrice;
 
     @DecimalMin(value = "0.0001", message = "Sell price must be positive")
-    @Digits(integer = 10, fraction = 4, message = "Sell price must have at most 4 decimal places")
     @Column(name = "sell_price")
-    private BigDecimal sellPrice;
+    private Double sellPrice;
 
     @Column(name = "trade_date")
     private LocalDateTime tradeDate;
@@ -107,15 +105,12 @@ public class Trade {
     @Column(name = "side", length = 125)
     private String side;
 
-    @Version
-    private Long version;
-
     public Trade(String account, String type) {
         this.account = account;
         this.type = type;
     }
 
-    public Trade(String account, String type, BigDecimal buyQuantity, BigDecimal sellQuantity) {
+    public Trade(String account, String type, Double buyQuantity, Double sellQuantity) {
         this.account = account;
         this.type = type;
         this.buyQuantity = buyQuantity;

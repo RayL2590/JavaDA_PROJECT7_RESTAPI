@@ -3,6 +3,7 @@ package com.nnk.springboot.controllers;
 import com.nnk.springboot.domain.CurvePoint;
 import com.nnk.springboot.services.ICurvePointService;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,10 @@ public class CurvePointController {
             logger.info("CurvePoint created: ID={}", saved.getId());
             ra.addFlashAttribute("successMessage", "Curve Point created successfully");
             return "redirect:/curvePoint/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "curvePoint/add";
         } catch (IllegalArgumentException e) {
             logger.error("Error creating CurvePoint", e);
             model.addAttribute("errorMessage", e.getMessage());
@@ -96,6 +101,11 @@ public class CurvePointController {
             logger.info("CurvePoint updated: ID={}", updated.getId());
             ra.addFlashAttribute("successMessage", "Curve Point updated successfully");
             return "redirect:/curvePoint/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            curvePoint.setId(id);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "curvePoint/update";
         } catch (IllegalArgumentException e) {
             logger.error("Error updating CurvePoint", e);
             curvePoint.setId(id);

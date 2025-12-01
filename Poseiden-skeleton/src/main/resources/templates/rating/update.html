@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
 	  xmlns:th="http://www.thymeleaf.org">
-<head>
-	<meta charset="utf-8"/>
-	<title>Home</title>
-	<link rel="stylesheet" href="../../css/bootstrap.min.css" >
-</head>
+<head th:replace="~{fragments/layout :: head('Update Rating')}"></head>
 <body>
-<div class="container">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-	<div class="row">
-		<h2>Update Rating</h2>
-	</div>
-
-	<div class="row">
-		<form action="#" th:action="@{/rating/update/{id}(id=${rating.id})}" th:object="${rating}" method="post" class="form-horizontal" style="width: 100%">
-			<div class="form-group">
-				<label for="moodysRating" class="col-sm-2 control-label">MoodysRating</label>
-				<div class="col-sm-10">
-					<select th:field="*{moodysRating}" id="moodysRating" class="col-4">
+<div class="container mt-4">
+	<div class="card">
+		<div class="card-header">
+			<h2>Update Rating</h2>
+		</div>
+		<div class="card-body">
+			<form action="#" th:action="@{/rating/update/{id}(id=${rating.id})}" th:object="${rating}" method="post">
+				<div class="mb-3">
+					<label for="moodysRating" class="form-label">MoodysRating</label>
+					<select th:field="*{moodysRating}" id="moodysRating" class="form-select">
 						<option value="">-- Sélectionner --</option>
 						<option value="Aaa">Aaa</option>
 						<option value="Aa1">Aa1</option>
@@ -44,11 +40,9 @@
 					</select>
 					<p class="text-danger" th:if="${#fields.hasErrors('moodysRating')}" th:errors="*{moodysRating}"></p>
 				</div>
-			</div>
-			<div class="form-group">
-				<label for="sandPRating" class="col-sm-2 control-label">SandPRating</label>
-				<div class="col-sm-10">
-					<select th:field="*{sandPRating}" id="sandPRating" class="col-4">
+				<div class="mb-3">
+					<label for="sandPRating" class="form-label">SandPRating</label>
+					<select th:field="*{sandPRating}" id="sandPRating" class="form-select">
 						<option value="">-- Sélectionner --</option>
 						<option value="AAA">AAA</option>
 						<option value="AA+">AA+</option>
@@ -75,11 +69,9 @@
 					</select>
 					<p class="text-danger" th:if="${#fields.hasErrors('sandPRating')}" th:errors="*{sandPRating}"></p>
 				</div>
-			</div>
-			<div class="form-group">
-				<label for="fitchRating" class="col-sm-2 control-label">FitchRating</label>
-				<div class="col-sm-10">
-					<select th:field="*{fitchRating}" id="fitchRating" class="col-4">
+				<div class="mb-3">
+					<label for="fitchRating" class="form-label">FitchRating</label>
+					<select th:field="*{fitchRating}" id="fitchRating" class="form-select">
 						<option value="">-- Sélectionner --</option>
 						<option value="AAA">AAA</option>
 						<option value="AA+">AA+</option>
@@ -106,27 +98,20 @@
 					</select>
 					<p class="text-danger" th:if="${#fields.hasErrors('fitchRating')}" th:errors="*{fitchRating}"></p>
 				</div>
-			</div>
-			<div class="form-group">
-				<label for="orderNumber" class="col-sm-2 control-label">Order</label>
-				<div class="col-sm-10">
-					<input type="number" th:field="*{orderNumber}" id="orderNumber" placeholder="Order Number" class="col-4">
+				<div class="mb-3">
+					<label for="orderNumber" class="form-label">Order</label>
+					<input type="number" th:field="*{orderNumber}" id="orderNumber" placeholder="Order Number" class="form-control">
 					<p class="text-danger" th:if="${#fields.hasErrors('orderNumber')}" th:errors="*{orderNumber}"></p>
 				</div>
-			</div>
 
-
-			<div class="form-group">
-				<div class="col-sm-12">
+				<div class="mt-3">
 					<input type="hidden" th:field="*{id}">
-					<input type="hidden" th:field="*{version}">
-					<a class="btn btn-danger btn-sm" href="/rating/list">Cancel</a>
-					<input class="btn btn-primary btn-sm" type="submit" value="Update Rating">
+					<a class="btn btn-secondary" href="/rating/list">Cancel</a>
+					<input class="btn btn-primary" type="submit" value="Update Rating">
 				</div>
-			</div>
-		</form>
+			</form>
+		</div>
 	</div>
-
 </div>
 </body>
 </html>

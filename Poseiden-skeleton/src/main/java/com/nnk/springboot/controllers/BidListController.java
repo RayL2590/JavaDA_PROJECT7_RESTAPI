@@ -3,6 +3,7 @@ package com.nnk.springboot.controllers;
 import com.nnk.springboot.domain.BidList;
 import com.nnk.springboot.services.IBidListService;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,10 @@ public class BidListController {
             logger.info("BidList created: ID={}", saved.getBidListId());
             ra.addFlashAttribute("successMessage", "BidList created successfully");
             return "redirect:/bidList/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "bidList/add";
         } catch (IllegalArgumentException e) {
             logger.error("Error creating BidList", e);
             model.addAttribute("errorMessage", e.getMessage());
@@ -96,6 +101,11 @@ public class BidListController {
             logger.info("BidList updated: ID={}", updated.getBidListId());
             ra.addFlashAttribute("successMessage", "BidList updated successfully");
             return "redirect:/bidList/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            bidList.setBidListId(id);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "bidList/update";
         } catch (IllegalArgumentException e) {
             logger.error("Error updating BidList", e);
             bidList.setBidListId(id);

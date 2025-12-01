@@ -82,6 +82,14 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.persistence</groupId>
+			<artifactId>jakarta.persistence-api</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -119,16 +127,13 @@
 				<version>0.8.13</version>
 				<configuration>
 					<excludes>
-						<!-- Exclusion des classes générées par Lombok -->
 						<exclude>**/*$lombok$*</exclude>
-						<!-- Exclusion des classes de configuration -->
 						<exclude>**/config/**</exclude>
-						<!-- Exclusion de la classe principale -->
 						<exclude>**/Application.class</exclude>
-						<!-- Exclusion des DTOs sans logique métier -->
-						<exclude>**/dto/**</exclude>
-						<!-- Exclusion des entités JPA -->
-						<exclude>**/model/**</exclude>
+						<exclude>**/domain/**</exclude>
+						<exclude>**/controllers/LoginController.class</exclude>
+						<exclude>**/controllers/HomeController.class</exclude>
+						<exclude>**/controllers/UserController.class</exclude>
 					</excludes>
 				</configuration>
 				<executions>

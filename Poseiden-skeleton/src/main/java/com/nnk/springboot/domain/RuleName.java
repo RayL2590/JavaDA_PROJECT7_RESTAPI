@@ -47,8 +47,7 @@ public class RuleName {
     @Column(name = "sqlPart", length = 125)
     private String sqlPart;
 
-    @Version
-    private Long version;
+    
 
     @Transient
     public String getSql() {

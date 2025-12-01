@@ -110,8 +110,7 @@ public class BidList {
     @Column(name = "side", length = 125)
     private String side;
 
-    @Version
-    private Long version;
+    
 
     public BidList(String account, String type, Double bidQuantity) {
         this.account = account;

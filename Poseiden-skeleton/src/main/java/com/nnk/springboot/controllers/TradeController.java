@@ -1,54 +1,131 @@
 package com.nnk.springboot.controllers;
 
 import com.nnk.springboot.domain.Trade;
+import com.nnk.springboot.services.ITradeService;
+import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid;
+import java.util.List;
 
 @Controller
+@RequestMapping("/trade")
 public class TradeController {
-    // TODO: Inject Trade service
 
-    @RequestMapping("/trade/list")
-    public String home(Model model)
-    {
-        // TODO: find all Trade, add to model
+    private static final Logger logger = LoggerFactory.getLogger(TradeController.class);
+    private final ITradeService tradeService;
+
+    public TradeController(ITradeService tradeService) {
+        this.tradeService = tradeService;
+    }
+
+    @GetMapping("/list")
+    public String home(Model model) {
+        List<Trade> trades = tradeService.findAll();
+        model.addAttribute("trades", trades);
         return "trade/list";
     }
 
-    @GetMapping("/trade/add")
-    public String addUser(Trade bid) {
+    @GetMapping("/add")
+    public String addTradeForm(Model model) {
+        model.addAttribute("trade", new Trade());
         return "trade/add";
     }
 
-    @PostMapping("/trade/validate")
-    public String validate(@Valid Trade trade, BindingResult result, Model model) {
-        // TODO: check data valid and save to db, after saving return Trade list
-        return "trade/add";
+    @PostMapping("/validate")
+    public String validate(@Valid @ModelAttribute Trade trade,
+                        BindingResult result,
+                        Model model,
+                        RedirectAttributes ra) {
+        logger.info("Creating Trade: account={}, type={}", trade.getAccount(), trade.getType());
+
+        if (result.hasErrors()) {
+            logger.warn("Validation errors: {}", result.getAllErrors());
+            return "trade/add";
+        }
+
+        try {
+            Trade saved = tradeService.create(trade);
+            logger.info("Trade created: ID={}", saved.getTradeId());
+            ra.addFlashAttribute("successMessage", "Trade created successfully");
+            return "redirect:/trade/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "trade/add";
+        } catch (IllegalArgumentException e) {
+            logger.error("Error creating Trade", e);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "trade/add";
+        }
     }
 
-    @GetMapping("/trade/update/{id}")
-    public String showUpdateForm(@PathVariable("id") Integer id, Model model) {
-        // TODO: get Trade by Id and to model then show to the form
-        return "trade/update";
+    @GetMapping("/update/{id}")
+    public String showUpdateForm(@PathVariable Integer id, Model model, RedirectAttributes ra) {
+        logger.info("Loading Trade for update: ID={}", id);
+
+        try {
+            Trade trade = tradeService.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Trade not found"));
+            model.addAttribute("trade", trade);
+            return "trade/update";
+        } catch (IllegalArgumentException e) {
+            logger.warn("Trade not found: ID={}", id);
+            ra.addFlashAttribute("errorMessage", "Trade not found");
+            return "redirect:/trade/list";
+        }
     }
 
-    @PostMapping("/trade/update/{id}")
-    public String updateTrade(@PathVariable("id") Integer id, @Valid Trade trade,
-                             BindingResult result, Model model) {
-        // TODO: check required fields, if valid call service to update Trade and return Trade list
-        return "redirect:/trade/list";
+    @PostMapping("/update/{id}")
+    public String updateTrade(@PathVariable Integer id,
+                            @Valid @ModelAttribute Trade trade,
+                            BindingResult result,
+                            Model model,
+                            RedirectAttributes ra) {
+        logger.info("Updating Trade: ID={}", id);
+
+        if (result.hasErrors()) {
+            logger.warn("Validation errors: {}", result.getAllErrors());
+            trade.setTradeId(id);
+            return "trade/update";
+        }
+
+        try {
+            Trade updated = tradeService.update(id, trade);
+            logger.info("Trade updated: ID={}", updated.getTradeId());
+            ra.addFlashAttribute("successMessage", "Trade updated successfully");
+            return "redirect:/trade/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            trade.setTradeId(id);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "trade/update";
+        } catch (Exception e) {
+            logger.error("Error updating Trade", e);
+            trade.setTradeId(id);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "trade/update";
+        }
     }
 
-    @GetMapping("/trade/delete/{id}")
-    public String deleteTrade(@PathVariable("id") Integer id, Model model) {
-        // TODO: Find Trade by Id and delete the Trade, return to Trade list
+    @PostMapping("/delete/{id}")
+    public String deleteTrade(@PathVariable Integer id, RedirectAttributes ra) {
+        logger.info("Deleting Trade: ID={}", id);
+
+        try {
+            tradeService.deleteById(id);
+            logger.info("Trade deleted: ID={}", id);
+            ra.addFlashAttribute("successMessage", "Trade deleted successfully");
+        } catch (IllegalArgumentException e) {
+            logger.error("Error deleting Trade", e);
+            ra.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/trade/list";
     }
 }

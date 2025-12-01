@@ -1,63 +1,49 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" 
 	  xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-<meta charset="utf-8"/>
-<title>Home</title>
-<link rel="stylesheet" href="../../css/bootstrap.min.css" >
+<head th:replace="~{fragments/layout :: head('Rating - Poseidon')}">
 </head>
 <body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
 <div class="container">
-	<div class="row">
-		<div class="col-6">
-			<a href="/bidList/list">Bid List</a>&nbsp;|&nbsp;
-			<a href="/curvePoint/list">Curve Points</a>&nbsp;|&nbsp;
-			<a href="/rating/list">Ratings</a>&nbsp;|&nbsp;
-			<a href="/trade/list">Trade</a>&nbsp;|&nbsp;
-			<a href="/ruleName/list">Rule</a>
+	<div class="card">
+		<div class="card-header">
+			<h2>Rating List</h2>
 		</div>
-		<div class="col-6 text-right">
-			Logged in user: <span th:text="${#httpServletRequest != null and #httpServletRequest.remoteUser != null ? #httpServletRequest.remoteUser : ''}"></span>
-			<form th:action="@{/app-logout}" method="POST">
-				<input type="submit" value="Logout"/>
-			</form>
+		<div class="card-body">
+			<a href="/rating/add" class="btn btn-primary btn-sm mb-3">Add New</a>
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>Id</th>
+						<th>MoodysRating</th>
+						<th>SandPRating</th>
+						<th>FitchRating</th>
+						<th>Order</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="rating : ${ratings}">
+						<td th:text="${rating.id}"></td>
+						<td th:text="${rating.moodysRating}"></td>
+						<td th:text="${rating.sandPRating}"></td>
+						<td th:text="${rating.fitchRating}"></td>
+						<td th:text="${rating.order}"></td>
+						<td>
+							<a th:href="@{/rating/update/{id}(id=${rating.id})}" class="btn btn-sm btn-warning">Edit</a>
+							<form th:action="@{/rating/delete/{id}(id=${rating.id})}" method="post" style="display:inline;">
+								<button type="submit" class="btn btn-sm btn-danger"
+										onclick="return confirm('Are you sure you want to delete this rating?')">
+									Delete
+								</button>
+							</form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
-	</div>
-	<div class="row"><h2>Rating List</h2></div>
-	<div class="row">
-		<a href="/rating/add" class="btn btn-primary btn-sm">Add New</a>
-		<table class="table table-bordered">
-			<thead>
-				<tr>
-					<th>Id</th>
-					<th>MoodysRating</th>
-					<th>SandPRating</th>
-					<th>FitchRating</th>
-					<th>Order</th>
-					<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr th:each="rating : ${ratings}">
-					<td style="width: 10%" th:text="${rating.id}"></td>
-					<td th:text="${rating.moodysRating}"></td>
-					<td th:text="${rating.sandPRating}"></td>
-					<td th:text="${rating.fitchRating}"></td>
-					<td th:text="${rating.order}"></td>
-					<td style="width: 15%" class="text-center">
-						<a th:href="@{/rating/update/{id}(id=${rating.id})}">Edit</a>&nbsp;|&nbsp;
-					</td>
-					<td>
-						<form th:action="@{/rating/delete/{id}(id=${rating.id})}" method="post" style="display:inline;">
-							<button type="submit" class="btn btn-danger btn-sm"
-									onclick="return confirm('Are you sure you want to delete this rating?')">
-								Delete
-							</button>
-						</form>
-					</td>
-				</tr>
-			</tbody>
-		</table>
 	</div>
 </div>
 </body>

@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import jakarta.validation.ConstraintViolationException;
+
 import jakarta.validation.Valid;
 
 @Controller
-@SuppressWarnings("null")
 public class UserController {
     @Autowired
     private UserRepository userRepository;
@@ -35,11 +36,19 @@ public class UserController {
     @PostMapping("/user/validate")
     public String validate(@Valid User user, BindingResult result, Model model) {
         if (!result.hasErrors()) {
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-            user.setPassword(encoder.encode(user.getPassword()));
-            userRepository.save(user);
-            model.addAttribute("users", userRepository.findAll());
-            return "redirect:/user/list";
+            try {
+                BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+                user.setPassword(encoder.encode(user.getPassword()));
+                userRepository.save(user);
+                model.addAttribute("users", userRepository.findAll());
+                return "redirect:/user/list";
+            } catch (ConstraintViolationException e) {
+                model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+                return "user/add";
+            } catch (IllegalArgumentException e) {
+                model.addAttribute("errorMessage", e.getMessage());
+                return "user/add";
+            }
         }
         return "user/add";
     }
@@ -59,12 +68,20 @@ public class UserController {
             return "user/update";
         }
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        user.setPassword(encoder.encode(user.getPassword()));
-        user.setId(id);
-        userRepository.save(user);
-        model.addAttribute("users", userRepository.findAll());
-        return "redirect:/user/list";
+        try {
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.setId(id);
+            userRepository.save(user);
+            model.addAttribute("users", userRepository.findAll());
+            return "redirect:/user/list";
+        } catch (ConstraintViolationException e) {
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "user/update";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/update";
+        }
     }
 
     @GetMapping("/user/delete/{id}")

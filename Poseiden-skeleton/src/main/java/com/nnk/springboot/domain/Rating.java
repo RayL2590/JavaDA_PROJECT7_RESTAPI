@@ -42,8 +42,7 @@ public class Rating {
     @Column(name = "order_number")
     private Integer orderNumber;
 
-    @Version
-    private Long version;
+    
 
     public Rating(String moodysRating, String sandPRating, String fitchRating) {
         this.moodysRating = moodysRating;

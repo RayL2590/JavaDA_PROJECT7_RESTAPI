@@ -1,52 +1,70 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" 
 	  xmlns:th="http://www.thymeleaf.org">
-<head>
-<meta charset="utf-8"/>
-<title>Home</title>
-<link rel="stylesheet" href="../../css/bootstrap.min.css" >
-</head>
+<head th:replace="~{fragments/layout :: head('Update Trade')}"></head>
 <body>
-<div class="container">
-	<div class="row">
-		<h2>Update Trade</h2>
-	</div>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-	<div class="row">
-		<form action="#" th:action="@{/trade/update/{id}(id=${trade.tradeId})}" th:object="${trade}" method="post" class="form-horizontal" style="width: 100%">
-			<div class="form-group">
-				<label for="account" class="col-sm-2 control-label">Account</label>
-				<div class="col-sm-10">
-					<input type="text" th:field="*{account}" id="account" placeholder="Account" class="col-4">
+<div class="container mt-4">
+	<div class="card">
+		<div class="card-header">
+			<h2>Update Trade</h2>
+		</div>
+		<div class="card-body">
+			<form action="#" th:action="@{/trade/update/{id}(id=${trade.tradeId})}" th:object="${trade}" method="post">
+				<div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+					<span th:text="${errorMessage}"></span>
+				</div>
+				<div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger" role="alert">
+					Veuillez corriger les erreurs dans le formulaire.
+				</div>
+				<div class="mb-3">
+					<label for="account" class="form-label">Account</label>
+					<input type="text" th:field="*{account}" id="account" placeholder="Account" class="form-control" name="account" required pattern="[A-Za-z0-9]{1,30}" maxlength="30" title="Account must be 1-30 letters or digits">
 					<p class="text-danger" th:if="${#fields.hasErrors('account')}" th:errors="*{account}"></p>
 				</div>
-			</div>
-			<div class="form-group">
-				<label for="type" class="col-sm-2 control-label">Type</label>
-				<div class="col-sm-10">
-					<input type="text" th:field="*{type}" id="type" placeholder="Type" class="col-4">
+				<div class="mb-3">
+					<label for="type" class="form-label">Type</label>
+					<select th:field="*{type}" id="type" class="form-select">
+						<option value="">-- Sélectionner --</option>
+						<option value="BUY">BUY</option>
+						<option value="SELL">SELL</option>
+						<option value="SWAP">SWAP</option>
+						<option value="OPTION">OPTION</option>
+						<option value="FUTURE">FUTURE</option>
+						<option value="FORWARD">FORWARD</option>
+					</select>
 					<p class="text-danger" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></p>
 				</div>
-			</div>
-			<div class="form-group">
-				<label for="buyQuantity" class="col-sm-2 control-label">Buy Quantity</label>
-				<div class="col-sm-10">
-					<input type="number" th:field="*{buyQuantity}" id="buyQuantity" placeholder="Buy Quantity" class="col-4">
+				<div class="mb-3">
+					<label for="buyQuantity" class="form-label">Buy Quantity</label>
+					<input type="number" th:field="*{buyQuantity}" id="buyQuantity" placeholder="Buy Quantity" class="form-control">
 					<p class="text-danger" th:if="${#fields.hasErrors('buyQuantity')}" th:errors="*{buyQuantity}"></p>
 				</div>
-			</div>
-
-
-			<div class="form-group">
-				<div class="col-sm-12">
-					<input type="hidden" th:field="*{id}">
-					<a class="btn btn-danger btn-sm" href="/trade/list">Cancel</a>
-					<input class="btn btn-primary btn-sm" type="submit" value="Update Trade">
+				<div class="mb-3">
+					<label for="buyPrice" class="form-label">Buy Price</label>
+					<input type="number" step="0.0001" th:field="*{buyPrice}" id="buyPrice" placeholder="Buy Price" class="form-control">
+					<p class="text-danger" th:if="${#fields.hasErrors('buyPrice')}" th:errors="*{buyPrice}"></p>
 				</div>
-			</div>
-		</form>
-	</div>
+				<div class="mb-3">
+					<label for="sellQuantity" class="form-label">Sell Quantity</label>
+					<input type="number" th:field="*{sellQuantity}" id="sellQuantity" placeholder="Sell Quantity" class="form-control">
+					<p class="text-danger" th:if="${#fields.hasErrors('sellQuantity')}" th:errors="*{sellQuantity}"></p>
+				</div>
+				<div class="mb-3">
+					<label for="sellPrice" class="form-label">Sell Price</label>
+					<input type="number" step="0.0001" th:field="*{sellPrice}" id="sellPrice" placeholder="Sell Price" class="form-control">
+					<p class="text-danger" th:if="${#fields.hasErrors('sellPrice')}" th:errors="*{sellPrice}"></p>
+				</div>
 
+				<div class="mt-3">
+					<input type="hidden" th:field="*{tradeId}">
+					<a class="btn btn-secondary" href="/trade/list">Cancel</a>
+					<input class="btn btn-primary" type="submit" value="Update Trade">
+				</div>
+			</form>
+		</div>
+	</div>
 </div>
 </body>
 </html>

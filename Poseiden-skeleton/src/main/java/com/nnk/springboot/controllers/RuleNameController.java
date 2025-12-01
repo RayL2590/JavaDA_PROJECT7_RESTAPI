@@ -3,6 +3,7 @@ package com.nnk.springboot.controllers;
 import com.nnk.springboot.domain.RuleName;
 import com.nnk.springboot.services.IRuleNameService;
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,10 @@ public class RuleNameController {
             logger.info("RuleName created: ID={}", saved.getId());
             ra.addFlashAttribute("successMessage", "Rule created successfully");
             return "redirect:/ruleName/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "ruleName/add";
         } catch (IllegalArgumentException e) {
             logger.error("Error creating RuleName", e);
             model.addAttribute("errorMessage", e.getMessage());
@@ -96,6 +101,11 @@ public class RuleNameController {
             logger.info("RuleName updated: ID={}", updated.getId());
             ra.addFlashAttribute("successMessage", "Rule updated successfully");
             return "redirect:/ruleName/list";
+        } catch (ConstraintViolationException e) {
+            logger.error("Constraint violation", e);
+            ruleName.setId(id);
+            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+            return "ruleName/update";
         } catch (IllegalArgumentException e) {
             logger.error("Error updating RuleName", e);
             ruleName.setId(id);
