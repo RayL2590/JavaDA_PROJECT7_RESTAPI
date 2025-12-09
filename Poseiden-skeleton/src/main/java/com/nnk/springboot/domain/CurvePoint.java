@@ -46,7 +46,8 @@ public class CurvePoint {
     @Column(name = "creationDate")
     private LocalDateTime creationDate;
 
-    
+    @Column(name = "creationName")
+    private String creationName;
 
     public CurvePoint(Integer curveId, BigDecimal term, BigDecimal value) {
         this.curveId = curveId;

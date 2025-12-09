@@ -7,45 +7,18 @@ import jakarta.validation.ConstraintValidatorContext;
 public class TradeValidator implements ConstraintValidator<ValidTradeData, Trade> {
 
     @Override
-    public void initialize(ValidTradeData constraintAnnotation) {
-    }
-
-    @Override
     public boolean isValid(Trade trade, ConstraintValidatorContext context) {
         if (trade == null) {
-            return true;
-        }
-
-        // Règle métier : Au moins une opération (achat OU vente) doit être définie
-        boolean hasBuyOperation = trade.getBuyQuantity() != null && trade.getBuyQuantity() > 0;
-        boolean hasSellOperation = trade.getSellQuantity() != null && trade.getSellQuantity() > 0;
-
-        if (!hasBuyOperation && !hasSellOperation) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(
-                "At least one operation (buy or sell) with positive quantity must be defined"
-            ).addConstraintViolation();
             return false;
         }
 
-        // Validation cohérence achat : si buyQuantity alors buyPrice obligatoire
-        if (hasBuyOperation && (trade.getBuyPrice() == null || trade.getBuyPrice() <= 0)) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(
-                "Buy price must be positive when buy quantity is specified"
-            ).addConstraintViolation();
-            return false;
-        }
+        Double buyQuantity = trade.getBuyQuantity();
+        Double sellQuantity = trade.getSellQuantity();
 
-        // Validation cohérence vente : si sellQuantity alors sellPrice obligatoire
-        if (hasSellOperation && (trade.getSellPrice() == null || trade.getSellPrice() <= 0)) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(
-                "Sell price must be positive when sell quantity is specified"
-            ).addConstraintViolation();
-            return false;
-        }
+        // Vérifie si au moins une des quantités est présente et positive
+        boolean isBuyValid = buyQuantity != null && buyQuantity > 0;
+        boolean isSellValid = sellQuantity != null && sellQuantity > 0;
 
-        return true;
+        return isBuyValid || isSellValid;
     }
 }

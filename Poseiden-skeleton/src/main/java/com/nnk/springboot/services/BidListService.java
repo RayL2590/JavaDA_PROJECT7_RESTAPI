@@ -4,7 +4,7 @@ import com.nnk.springboot.domain.BidList;
 import com.nnk.springboot.repositories.BidListRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -63,14 +63,24 @@ public class BidListService implements IBidListService {
     }
 
     @Override
-    public void deleteById(@NotNull Integer id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid ID: " + id);
-        }
-        try {
-            bidListRepository.deleteById(id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new IllegalArgumentException("BidList not found with id: " + id);
-        }
+    public void deleteById(Integer id, org.springframework.security.core.userdetails.UserDetails userDetails) {
+    if (id == null || id <= 0) {
+        throw new IllegalArgumentException("Invalid ID: " + id);
+    }
+
+    BidList bidList = bidListRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("BidList not found with id: " + id));
+
+    String currentUsername = userDetails.getUsername();
+    boolean isAdmin = userDetails.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+    boolean isOwner = bidList.getCreationName() != null && bidList.getCreationName().equals(currentUsername);
+
+    if (!isOwner && !isAdmin) {
+        throw new AccessDeniedException("You are not authorized to delete this BidList");
+    }
+
+    bidListRepository.delete(bidList);
     }
 }

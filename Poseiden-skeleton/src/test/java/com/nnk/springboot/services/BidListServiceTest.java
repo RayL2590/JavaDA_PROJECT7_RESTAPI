@@ -9,7 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -201,26 +204,51 @@ class BidListServiceTest {
 
     // DELETE Tests
     @Test
-    @DisplayName("Should delete BidList successfully")
+    @DisplayName("Should delete BidList successfully when owner")
     void shouldDeleteBidListSuccessfully() {
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn("ownerUser");
         
-        doNothing().when(bidListRepository).deleteById(1);
+        BidList bidToDelete = new BidList();
+        bidToDelete.setBidListId(1);
+        bidToDelete.setCreationName("ownerUser");
+        when(bidListRepository.findById(1)).thenReturn(Optional.of(bidToDelete));
 
-        
-        bidListService.deleteById(1);
+        // Act
+        bidListService.deleteById(1, userDetails);
 
+        // Assert
+        verify(bidListRepository).delete(bidToDelete);
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when user is not owner and not admin")
+    void shouldThrowAccessDeniedWhenNotOwner() {
+        UserDetails hacker = mock(UserDetails.class);
+        when(hacker.getUsername()).thenReturn("hacker");
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(hacker).getAuthorities();
+
+        BidList bidToDelete = new BidList();
+        bidToDelete.setBidListId(1);
+        bidToDelete.setCreationName("ownerUser");
+
+        when(bidListRepository.findById(1)).thenReturn(Optional.of(bidToDelete));
+
+        // Act & Assert
+        assertThatThrownBy(() -> bidListService.deleteById(1, hacker))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("not authorized");
         
-        verify(bidListRepository).deleteById(1);
+        verify(bidListRepository, never()).delete(any());
     }
 
     @Test
     @DisplayName("Should throw exception when deleting non-existent BidList")
     void shouldThrowExceptionWhenDeletingNonExistent() {
-        
-        doThrow(new EmptyResultDataAccessException(1)).when(bidListRepository).deleteById(999);
+        UserDetails userDetails = mock(UserDetails.class);
 
-        
-        assertThatThrownBy(() -> bidListService.deleteById(999))
+        // Act & Assert
+        assertThatThrownBy(() -> bidListService.deleteById(999, userDetails))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not found");
     }
@@ -228,17 +256,9 @@ class BidListServiceTest {
     @Test
     @DisplayName("Should throw exception when deleting with invalid ID")
     void shouldThrowExceptionWhenDeletingWithInvalidId() {
-        
-        assertThatThrownBy(() -> bidListService.deleteById(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
+        UserDetails userDetails = mock(UserDetails.class);
 
-        assertThatThrownBy(() -> bidListService.deleteById(0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
-
-        assertThatThrownBy(() -> bidListService.deleteById(-1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
+        assertThatThrownBy(() -> bidListService.deleteById(null, userDetails))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

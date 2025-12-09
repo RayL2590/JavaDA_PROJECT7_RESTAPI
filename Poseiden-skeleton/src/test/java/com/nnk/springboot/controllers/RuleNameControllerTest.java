@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,11 +20,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-@WebMvcTest(controllers = RuleNameController.class, excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
-})
+@WebMvcTest(controllers = RuleNameController.class)
 @DisplayName("RuleNameController Tests")
+@WithMockUser(username = "admin", roles = "ADMIN")
 class RuleNameControllerTest {
 
     @Autowired
@@ -93,6 +94,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription"))
                 .andExpect(status().is3xxRedirection())
@@ -107,8 +109,9 @@ class RuleNameControllerTest {
     void shouldReturnToFormWithValidationErrors() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
-                .param("name", "") // Empty name
-                .param("description", "")) // Empty description
+                .with(csrf())
+                .param("name", "")
+                .param("description", ""))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ruleName/add"))
                 .andExpect(model().attributeHasErrors("ruleName"));
@@ -125,6 +128,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription"))
                 .andExpect(status().isOk())
@@ -169,6 +173,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/update/1")
+                .with(csrf())
                 .param("name", "UpdatedRule")
                 .param("description", "UpdatedDescription"))
                 .andExpect(status().is3xxRedirection())
@@ -183,8 +188,9 @@ class RuleNameControllerTest {
     void shouldReturnToUpdateFormWithValidationErrors() throws Exception {
         // Act & Assert
         mockMvc.perform(post("/ruleName/update/1")
-                .param("name", "") // Empty name
-                .param("description", "")) // Empty description
+                .with(csrf())
+                .param("name", "")
+                .param("description", ""))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ruleName/update"))
                 .andExpect(model().attributeHasErrors("ruleName"));
@@ -201,6 +207,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/update/999")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription"))
                 .andExpect(status().isOk())
@@ -215,7 +222,8 @@ class RuleNameControllerTest {
         doNothing().when(ruleNameService).deleteById(1);
 
         // Act & Assert
-        mockMvc.perform(post("/ruleName/delete/1"))
+        mockMvc.perform(post("/ruleName/delete/1")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ruleName/list"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -231,7 +239,8 @@ class RuleNameControllerTest {
                 .when(ruleNameService).deleteById(999);
 
         // Act & Assert
-        mockMvc.perform(post("/ruleName/delete/999"))
+        mockMvc.perform(post("/ruleName/delete/999")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/ruleName/list"))
                 .andExpect(flash().attributeExists("errorMessage"));
@@ -245,6 +254,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription"))
                 .andExpect(flash().attribute("successMessage", notNullValue()));
@@ -269,6 +279,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", longName)
                 .param("description", "TestDescription"))
                 .andExpect(status().isOk())
@@ -284,6 +295,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription")
                 .param("template", longTemplate))
@@ -300,6 +312,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription"))
                 .andExpect(status().is3xxRedirection());
@@ -313,6 +326,7 @@ class RuleNameControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/ruleName/validate")
+                .with(csrf())
                 .param("name", "TestRule")
                 .param("description", "TestDescription")
                 .param("json", "{\"key\":\"value\"}")

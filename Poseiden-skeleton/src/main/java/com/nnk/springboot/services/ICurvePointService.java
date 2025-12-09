@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.userdetails.UserDetails;
+
 public interface ICurvePointService {
 
     List<CurvePoint> findAll();
@@ -17,5 +19,5 @@ public interface ICurvePointService {
 
     CurvePoint update(@NotNull Integer id, @Valid CurvePoint curvePoint);
 
-    void deleteById(@NotNull Integer id);
+    void deleteById(Integer id, UserDetails userDetails);
 }

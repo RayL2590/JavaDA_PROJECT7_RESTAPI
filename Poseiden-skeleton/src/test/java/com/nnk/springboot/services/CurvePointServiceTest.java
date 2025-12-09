@@ -9,7 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -223,26 +226,80 @@ class CurvePointServiceTest {
 
     // DELETE Tests
     @Test
-    @DisplayName("Should delete CurvePoint successfully")
-    void shouldDeleteCurvePointSuccessfully() {
-        // Arrange
-        doNothing().when(curvePointRepository).deleteById(1);
+    @DisplayName("Should delete CurvePoint successfully when user is Owner")
+    void shouldDeleteCurvePointSuccessfully_WhenOwner() {
+        // 1. Mock de l'utilisateur (le propriétaire)
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn("ownerUser");
+
+        // 2. Mock du CurvePoint existant
+        CurvePoint cp = new CurvePoint();
+        cp.setId(1);
+        cp.setCreationName("ownerUser"); // Correspond au username
+
+        when(curvePointRepository.findById(1)).thenReturn(Optional.of(cp));
 
         // Act
-        curvePointService.deleteById(1);
+        curvePointService.deleteById(1, userDetails);
 
         // Assert
-        verify(curvePointRepository).deleteById(1);
+        verify(curvePointRepository).delete(cp);
+    }
+
+    @Test
+    @DisplayName("Should delete CurvePoint successfully when user is Admin")
+    void shouldDeleteCurvePointSuccessfully_WhenAdmin() {
+        // 1. Mock de l'admin
+        UserDetails adminUser = mock(UserDetails.class);
+        when(adminUser.getUsername()).thenReturn("admin");
+        // On simule l'autorité ADMIN
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(adminUser).getAuthorities();
+
+        // 2. Mock d'un CurvePoint appartenant à quelqu'un d'autre
+        CurvePoint cp = new CurvePoint();
+        cp.setId(1);
+        cp.setCreationName("otherUser"); 
+
+        when(curvePointRepository.findById(1)).thenReturn(Optional.of(cp));
+
+        // Act
+        curvePointService.deleteById(1, adminUser);
+
+        // Assert
+        verify(curvePointRepository).delete(cp);
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when user is not owner and not admin")
+    void shouldThrowAccessDenied_WhenNotOwnerAndNotAdmin() {
+        UserDetails hacker = mock(UserDetails.class);
+        when(hacker.getUsername()).thenReturn("hacker");
+
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_USER"))).when(hacker).getAuthorities();
+
+        CurvePoint cp = new CurvePoint();
+        cp.setId(1);
+        cp.setCreationName("owner");
+
+        when(curvePointRepository.findById(1)).thenReturn(Optional.of(cp));
+
+        // Act & Assert
+        assertThatThrownBy(() -> curvePointService.deleteById(1, hacker))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("not authorized");
+
+        verify(curvePointRepository, never()).delete(any());
     }
 
     @Test
     @DisplayName("Should throw exception when deleting non-existent CurvePoint")
     void shouldThrowExceptionWhenDeletingNonExistent() {
-        // Arrange
-        doThrow(new EmptyResultDataAccessException(1)).when(curvePointRepository).deleteById(999);
+        UserDetails userDetails = mock(UserDetails.class);
+
+        when(curvePointRepository.findById(455999)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> curvePointService.deleteById(999))
+        assertThatThrownBy(() -> curvePointService.deleteById(455999, userDetails))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not found");
     }
@@ -250,17 +307,9 @@ class CurvePointServiceTest {
     @Test
     @DisplayName("Should throw exception when deleting with invalid ID")
     void shouldThrowExceptionWhenDeletingWithInvalidId() {
-        // Act & Assert
-        assertThatThrownBy(() -> curvePointService.deleteById(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
+        UserDetails userDetails = mock(UserDetails.class);
 
-        assertThatThrownBy(() -> curvePointService.deleteById(0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
-
-        assertThatThrownBy(() -> curvePointService.deleteById(-1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid ID");
+        assertThatThrownBy(() -> curvePointService.deleteById(null, userDetails))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

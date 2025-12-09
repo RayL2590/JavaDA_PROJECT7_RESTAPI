@@ -18,13 +18,12 @@ public class User {
 
     @ValidPassword
     @NotBlank(message = "Password is mandatory")
-
     private String password;
+
     @NotBlank(message = "FullName is mandatory")
-
     private String fullname;
-    @NotBlank(message = "Role is mandatory")
 
+    @NotBlank(message = "Role is mandatory")
     private String role;
 
     public Integer getId() {

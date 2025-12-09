@@ -1,7 +1,7 @@
 package com.nnk.springboot.controllers;
 
 import com.nnk.springboot.domain.User;
-import com.nnk.springboot.repositories.UserRepository;
+import com.nnk.springboot.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
-import java.util.Optional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -22,23 +21,17 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Test
     void home_shouldDisplayUserList() throws Exception {
         User u1 = new User();
         u1.setId(1);
         u1.setUsername("user1");
-        u1.setPassword("Password1!");
-        u1.setFullname("User One");
-        u1.setRole("ADMIN");
         User u2 = new User();
         u2.setId(2);
         u2.setUsername("user2");
-        u2.setPassword("Password2!");
-        u2.setFullname("User Two");
-        u2.setRole("USER");
-        Mockito.when(userRepository.findAll()).thenReturn(Arrays.asList(u1, u2));
+        Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u1, u2));
 
         mockMvc.perform(get("/user/list"))
                 .andExpect(status().isOk())
@@ -58,11 +51,8 @@ class UserControllerTest {
         User u = new User();
         u.setId(1);
         u.setUsername("user1");
-        u.setPassword("Password1!");
-        u.setFullname("User One");
-        u.setRole("ADMIN");
-        Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(u);
-        Mockito.when(userRepository.findAll()).thenReturn(Arrays.asList(u));
+        Mockito.when(userService.createUser(Mockito.any(User.class))).thenReturn(u);
+        Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u));
 
         mockMvc.perform(post("/user/validate")
                 .param("username", "user1")
@@ -92,9 +82,7 @@ class UserControllerTest {
         u.setId(1);
         u.setUsername("user1");
         u.setPassword("");
-        u.setFullname("User One");
-        u.setRole("ADMIN");
-        Mockito.when(userRepository.findById(1)).thenReturn(Optional.of(u));
+        Mockito.when(userService.findById(1)).thenReturn(u);
 
         mockMvc.perform(get("/user/update/1"))
                 .andExpect(status().isOk())
@@ -107,11 +95,8 @@ class UserControllerTest {
         User u = new User();
         u.setId(1);
         u.setUsername("user1");
-        u.setPassword("Password1!");
-        u.setFullname("User One");
-        u.setRole("ADMIN");
-        Mockito.when(userRepository.save(Mockito.any(User.class))).thenReturn(u);
-        Mockito.when(userRepository.findAll()).thenReturn(Arrays.asList(u));
+        Mockito.when(userService.updateUser(Mockito.eq(1), Mockito.any(User.class))).thenReturn(u);
+        Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u));
 
         mockMvc.perform(post("/user/update/1")
                 .param("username", "user1")
@@ -137,17 +122,10 @@ class UserControllerTest {
 
     @Test
     void deleteUser_shouldRedirectOnSuccess() throws Exception {
-        User u = new User();
-        u.setId(1);
-        u.setUsername("user1");
-        u.setPassword("Password1!");
-        u.setFullname("User One");
-        u.setRole("ADMIN");
-        Mockito.when(userRepository.findById(1)).thenReturn(Optional.of(u));
-        Mockito.doNothing().when(userRepository).delete(u);
-        Mockito.when(userRepository.findAll()).thenReturn(Arrays.asList());
+        Mockito.doNothing().when(userService).deleteUser(1);
+        Mockito.when(userService.findAll()).thenReturn(Arrays.asList());
 
-        mockMvc.perform(get("/user/delete/1"))
+        mockMvc.perform(post("/user/delete/1").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/user/list"));
     }

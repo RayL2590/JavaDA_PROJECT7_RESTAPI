@@ -8,6 +8,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -67,14 +69,29 @@ public class CurvePointService implements ICurvePointService {
     }
 
     @Override
-    public void deleteById(@NotNull Integer id) {
+    public void deleteById(Integer id, UserDetails userDetails) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid ID: " + id);
         }
+
+        CurvePoint curvePoint = curvePointRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("CurvePoint not found with id: " + id));
+
+        String currentUsername = userDetails.getUsername();
+        
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isOwner = curvePoint.getCreationName() != null && 
+                        curvePoint.getCreationName().equals(currentUsername);
+
+        if (!isOwner && !isAdmin) {
+            throw new AccessDeniedException("You are not authorized to delete this CurvePoint");
+        }
         try {
-            curvePointRepository.deleteById(id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new IllegalArgumentException("CurvePoint not found with id: " + id);
+            curvePointRepository.delete(curvePoint);
+        } catch (Exception e) {
+            throw new RuntimeException("Error occurred while deleting CurvePoint", e);
         }
     }
 }

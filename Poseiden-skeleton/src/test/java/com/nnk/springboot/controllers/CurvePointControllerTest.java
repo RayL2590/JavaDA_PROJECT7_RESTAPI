@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -16,6 +19,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -204,7 +208,8 @@ class CurvePointControllerTest {
     @Test
     @DisplayName("POST /curvePoint/update/{id} should update CurvePoint and redirect")
     void shouldUpdateCurvePointAndRedirect() throws Exception {
-        // Arrange
+
+        when(curvePointService.findById(1)).thenReturn(Optional.of(validCurvePoint));
         when(curvePointService.update(eq(1), any(CurvePoint.class))).thenReturn(validCurvePoint);
 
         // Act & Assert
@@ -256,9 +261,10 @@ class CurvePointControllerTest {
 
     @Test
     @DisplayName("POST /curvePoint/delete/{id} should delete CurvePoint and redirect")
+    @WithMockUser(username = "admin")
     void shouldDeleteCurvePointAndRedirect() throws Exception {
         // Arrange
-        doNothing().when(curvePointService).deleteById(1);
+        doNothing().when(curvePointService).deleteById(eq(1), any(UserDetails.class));
 
         // Act & Assert
         mockMvc.perform(post("/curvePoint/delete/1")
@@ -267,22 +273,24 @@ class CurvePointControllerTest {
                 .andExpect(redirectedUrl("/curvePoint/list"))
                 .andExpect(flash().attributeExists("successMessage"));
 
-        verify(curvePointService).deleteById(1);
+        verify(curvePointService).deleteById(eq(1), any(UserDetails.class));
     }
 
     @Test
-    @DisplayName("POST /curvePoint/delete/{id} should handle non-existent CurvePoint")
-    void shouldHandleDeleteNonExistentCurvePoint() throws Exception {
+    @DisplayName("POST /curvePoint/delete/{id} should handle AccessDeniedException")
+    @org.springframework.security.test.context.support.WithMockUser(username = "hacker") 
+    void shouldHandleAccessDeniedException() throws Exception {
         // Arrange
-        doThrow(new IllegalArgumentException("CurvePoint not found"))
-                .when(curvePointService).deleteById(999);
+        doThrow(new AccessDeniedException("Access is denied"))
+                .when(curvePointService).deleteById(eq(1), any(org.springframework.security.core.userdetails.UserDetails.class));
 
         // Act & Assert
-        mockMvc.perform(post("/curvePoint/delete/999")
+        mockMvc.perform(post("/curvePoint/delete/1")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/curvePoint/list"))
-                .andExpect(flash().attributeExists("errorMessage"));
+                .andExpect(flash().attributeExists("errorMessage"))
+                .andExpect(flash().attribute("errorMessage", containsString("Error: You are not authorized"))); 
     }
 
     @Test

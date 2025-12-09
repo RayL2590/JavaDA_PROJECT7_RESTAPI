@@ -11,7 +11,12 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.AccessDeniedException;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -26,9 +31,11 @@ public class CurvePointController {
     }
 
     @GetMapping("/list")
-    public String home(Model model) {
+    public String home(Model model, Authentication authentication) {
         List<CurvePoint> curvePoints = curvePointService.findAll();
         model.addAttribute("curvePoints", curvePoints);
+        model.addAttribute("currentUsername", authentication.getName());
+        model.addAttribute("currentRoles", authentication.getAuthorities());
         return "curvePoint/list";
     }
 
@@ -40,29 +47,36 @@ public class CurvePointController {
 
     @PostMapping("/validate")
     public String validate(@Valid @ModelAttribute CurvePoint curvePoint,
-                          BindingResult result,
-                          Model model,
-                          RedirectAttributes ra) {
-        logger.info("Creating CurvePoint: curveId={}, term={}", curvePoint.getCurveId(), curvePoint.getTerm());
+                       BindingResult result,
+                       Model model,
+                       RedirectAttributes ra,
+                       Principal principal) {
 
-        if (result.hasErrors()) {
-            logger.warn("Validation errors: {}", result.getAllErrors());
-            return "curvePoint/add";
-        }
+    logger.info("User {} is attempting to create CurvePoint: curveId={}, term={}", 
+            principal.getName(), curvePoint.getCurveId(), curvePoint.getTerm());
 
-        try {
-            CurvePoint saved = curvePointService.create(curvePoint);
-            logger.info("CurvePoint created: ID={}", saved.getId());
-            ra.addFlashAttribute("successMessage", "Curve Point created successfully");
-            return "redirect:/curvePoint/list";
+    if (result.hasErrors()) {
+        logger.warn("Validation errors: {}", result.getAllErrors());
+        return "curvePoint/add";
+    }
+
+    try {
+        curvePoint.setCreationName(principal.getName());
+
+        CurvePoint saved = curvePointService.create(curvePoint);
+        
+        logger.info("CurvePoint created: ID={} by User={}", saved.getId(), principal.getName());
+        ra.addFlashAttribute("successMessage", "Curve Point created successfully");
+        return "redirect:/curvePoint/list";
+
         } catch (ConstraintViolationException e) {
-            logger.error("Constraint violation", e);
-            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
-            return "curvePoint/add";
+        logger.error("Constraint violation", e);
+        model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+        return "curvePoint/add";
         } catch (IllegalArgumentException e) {
-            logger.error("Error creating CurvePoint", e);
-            model.addAttribute("errorMessage", e.getMessage());
-            return "curvePoint/add";
+        logger.error("Error creating CurvePoint", e);
+        model.addAttribute("errorMessage", e.getMessage());
+        return "curvePoint/add";
         }
     }
 
@@ -84,10 +98,10 @@ public class CurvePointController {
 
     @PostMapping("/update/{id}")
     public String updateCurvePoint(@PathVariable Integer id,
-                                  @Valid @ModelAttribute CurvePoint curvePoint,
-                                  BindingResult result,
-                                  Model model,
-                                  RedirectAttributes ra) {
+                                @Valid @ModelAttribute CurvePoint curvePoint,
+                                BindingResult result,
+                                Model model,
+                                RedirectAttributes ra) {
         logger.info("Updating CurvePoint: ID={}", id);
 
         if (result.hasErrors()) {
@@ -97,6 +111,10 @@ public class CurvePointController {
         }
 
         try {
+            CurvePoint existing = curvePointService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("CurvePoint not found"));
+            curvePoint.setCreationName(existing.getCreationName());
+
             CurvePoint updated = curvePointService.update(id, curvePoint);
             logger.info("CurvePoint updated: ID={}", updated.getId());
             ra.addFlashAttribute("successMessage", "Curve Point updated successfully");
@@ -115,17 +133,26 @@ public class CurvePointController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteCurvePoint(@PathVariable Integer id, RedirectAttributes ra) {
-        logger.info("Deleting CurvePoint: ID={}", id);
-
+    public String deleteCurvePoint(@PathVariable Integer id, 
+                                RedirectAttributes ra,
+                                @AuthenticationPrincipal UserDetails userDetails) {
+        logger.info("User {} attempting to delete CurvePoint ID={}", userDetails.getUsername(), id);
+        
         try {
-            curvePointService.deleteById(id);
-            logger.info("CurvePoint deleted: ID={}", id);
+            curvePointService.deleteById(id, userDetails);
+            logger.info("CurvePoint deleted: ID={} by User={}", id, userDetails.getUsername());
             ra.addFlashAttribute("successMessage", "Curve Point deleted successfully");
+        } catch (AccessDeniedException e) {
+            logger.warn("Unauthorized delete attempt on CurvePoint {} by user {}", id, userDetails.getUsername());
+            ra.addFlashAttribute("errorMessage", "Error: You are not authorized to delete this item.");
         } catch (IllegalArgumentException e) {
             logger.error("Error deleting CurvePoint", e);
             ra.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error", e);
+            ra.addFlashAttribute("errorMessage", "An unexpected error occurred.");
         }
+        
         return "redirect:/curvePoint/list";
     }
 }

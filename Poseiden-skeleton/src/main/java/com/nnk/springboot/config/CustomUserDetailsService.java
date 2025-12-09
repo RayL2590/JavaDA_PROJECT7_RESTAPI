@@ -31,7 +31,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * Charge un utilisateur par son nom d'utilisateur pour l'authentification.
-     * 
      * @param username Le nom d'utilisateur
      * @return UserDetails contenant les informations d'authentification
      * @throws UsernameNotFoundException Si l'utilisateur n'existe pas

@@ -35,6 +35,7 @@ public class BidList {
     @Column(name = "type", nullable = false, length = 30)
     private String type;
 
+    @NotNull(message = "Bid quantity is mandatory")
     @DecimalMin(value = "0.0", inclusive = true, message = "Bid quantity must be positive or zero")
     @Column(name = "bid_quantity")
     private Double bidQuantity;

@@ -28,12 +28,15 @@
 						<td th:text="${bidList.type}"></td>
 						<td th:text="${bidList.bidQuantity}"></td>
 						<td>
-							<a th:href="@{/bidList/update/{id}(id=${bidList.bidListId})}" class="btn btn-sm btn-warning">Edit</a>
-							<form th:action="@{/bidList/delete/{id}(id=${bidList.bidListId})}"
-								  method="post"
-								  style="display:inline;">
-								<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-							</form>
+							<span th:if="${#authorization.expression('hasRole(''ADMIN'')') 
+								or ( #authorization.expression('hasRole(''USER'')') and bidList.creationName == currentUsername )}">
+								<a th:href="@{/bidList/update/{id}(id=${bidList.bidListId})}" class="btn btn-sm btn-warning">Edit</a>
+								<form th:action="@{/bidList/delete/{id}(id=${bidList.bidListId})}"
+									method="post"
+									style="display:inline;">
+									<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+								</form>
+							</span>
 						</td>
 					</tr>
 				</tbody>

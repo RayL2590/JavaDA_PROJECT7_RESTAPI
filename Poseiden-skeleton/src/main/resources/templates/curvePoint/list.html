@@ -28,13 +28,16 @@
 						<td th:text="${curvePoint.term}"></td>
 						<td th:text="${curvePoint.value}"></td>
 						<td>
+						<span th:if="${#authorization.expression('hasRole(''ADMIN'')') 
+							or ( #authorization.expression('hasRole(''USER'')') and curvePoint.creationName == currentUsername )}">
 							<a th:href="@{/curvePoint/update/{id}(id=${curvePoint.id})}" class="btn btn-sm btn-warning">Edit</a>
 							<form th:action="@{/curvePoint/delete/{id}(id=${curvePoint.id})}"
-								  method="post"
-								  style="display:inline;">
+								method="post"
+								style="display:inline;">
 								<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
 							</form>
-						</td>
+						</span>
+					</td>
 					</tr>
 				</tbody>
 			</table>

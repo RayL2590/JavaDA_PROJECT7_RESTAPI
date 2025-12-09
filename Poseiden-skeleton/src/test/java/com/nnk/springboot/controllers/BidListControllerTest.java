@@ -8,8 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -187,6 +190,8 @@ class BidListControllerTest {
     @Test
     @DisplayName("POST /bidList/update/{id} should update BidList and redirect")
     void shouldUpdateBidListAndRedirect() throws Exception {
+
+        when(bidListService.findById(1)).thenReturn(Optional.of(validBidList));
         
         when(bidListService.update(eq(1), any(BidList.class))).thenReturn(validBidList);
 
@@ -236,31 +241,48 @@ class BidListControllerTest {
                 .andExpect(model().attributeExists("errorMessage"));
     }
 
-    // DELETE Tests
     @Test
     @DisplayName("POST /bidList/delete/{id} should delete BidList and redirect")
+    @WithMockUser(username = "admin", roles = "ADMIN") // On simule un utilisateur connecté
     void shouldDeleteBidListAndRedirect() throws Exception {
-        
-        doNothing().when(bidListService).deleteById(1);
+        // Arrange
+        doNothing().when(bidListService).deleteById(eq(1), any(UserDetails.class));
 
-        
+        // Act & Assert
         mockMvc.perform(post("/bidList/delete/1")
                 .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/bidList/list"))
                 .andExpect(flash().attributeExists("successMessage"));
 
-        verify(bidListService).deleteById(1);
+        verify(bidListService).deleteById(eq(1), any(UserDetails.class));
+    }
+
+    @Test
+    @DisplayName("POST /bidList/delete/{id} should handle AccessDeniedException")
+    @WithMockUser(username = "user")
+    void shouldHandleAccessDeniedException() throws Exception {
+        // Arrange
+        doThrow(new AccessDeniedException("Forbidden"))
+                .when(bidListService).deleteById(eq(1), any(UserDetails.class));
+
+        // Act & Assert
+        mockMvc.perform(post("/bidList/delete/1")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/bidList/list"))
+                .andExpect(flash().attribute("errorMessage", containsString("Error: You are not authorized")));
     }
 
     @Test
     @DisplayName("POST /bidList/delete/{id} should handle non-existent BidList")
+    @WithMockUser(username = "admin")
     void shouldHandleDeleteNonExistentBidList() throws Exception {
-        
+        // Arrange
         doThrow(new IllegalArgumentException("BidList not found"))
-                .when(bidListService).deleteById(999);
+                .when(bidListService).deleteById(eq(999), any(UserDetails.class));
 
-        
+        // Act & Assert
         mockMvc.perform(post("/bidList/delete/999")
                 .with(csrf()))
                 .andExpect(status().is3xxRedirection())

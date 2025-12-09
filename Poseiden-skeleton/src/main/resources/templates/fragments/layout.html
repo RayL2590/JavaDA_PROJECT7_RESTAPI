@@ -14,9 +14,11 @@
             <div class="col-8">
                 <a href="/bidList/list">Bid List</a>
                 <a href="/curvePoint/list">Curve Points</a>
-                <a href="/rating/list">Ratings</a>
-                <a href="/trade/list">Trade</a>
-                <a href="/ruleName/list">Rule</a>
+                <span th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                    <a href="/rating/list">Ratings</a>
+                    <a href="/trade/list">Trade</a>
+                    <a href="/ruleName/list">Rule</a>
+                </span>
             </div>
             <div class="col-4 text-end">
                 <span>User: <b th:text="${#authentication != null ? #authentication.name : 'Invité'}"></b></span>

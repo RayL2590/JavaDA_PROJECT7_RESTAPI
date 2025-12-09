@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,11 +20,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
-@WebMvcTest(controllers = RatingController.class, excludeAutoConfiguration = {
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
-})
+@WebMvcTest(controllers = RatingController.class)
 @DisplayName("RatingController - Tests unitaires")
+@WithMockUser(username = "admin", roles = "ADMIN")
 class RatingControllerTest {
 
     @Autowired
@@ -97,6 +98,7 @@ class RatingControllerTest {
 
         
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")
@@ -113,6 +115,7 @@ class RatingControllerTest {
     void validate_WithValidationErrors_ShouldReturnForm() throws Exception {
         
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")
@@ -128,6 +131,7 @@ class RatingControllerTest {
     @DisplayName("POST /rating/validate - Sans aucune notation - Doit échouer validation")
     void validate_WithNoRatings_ShouldFailValidation() throws Exception {
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "")
                         .param("sandPRating", "")
                         .param("fitchRating", "")
@@ -144,6 +148,7 @@ class RatingControllerTest {
     void validate_WithInvalidMoodysFormat_ShouldFailValidation() throws Exception {
         
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "AAA")
                         .param("sandPRating", "")
                         .param("fitchRating", "")
@@ -164,6 +169,7 @@ class RatingControllerTest {
 
         
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")
@@ -180,11 +186,12 @@ class RatingControllerTest {
         when(ratingService.findById(1)).thenReturn(Optional.of(rating1));
 
         
-        mockMvc.perform(get("/rating/update/1"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("rating/update"))
-                .andExpect(model().attributeExists("rating"))
-                .andExpect(model().attribute("rating", org.hamcrest.Matchers.hasProperty("id", org.hamcrest.Matchers.is(1))));
+        mockMvc.perform(get("/rating/update/1")
+                        .with(csrf()))
+                        .andExpect(status().isOk())
+                        .andExpect(view().name("rating/update"))
+                        .andExpect(model().attributeExists("rating"))
+                        .andExpect(model().attribute("rating", org.hamcrest.Matchers.hasProperty("id", org.hamcrest.Matchers.is(1))));
 
         verify(ratingService).findById(1);
     }
@@ -212,6 +219,7 @@ class RatingControllerTest {
 
         
         mockMvc.perform(post("/rating/update/1")
+                        .with(csrf())
                         .param("moodysRating", "Aa1")
                         .param("sandPRating", "AA+")
                         .param("fitchRating", "AA+")
@@ -228,6 +236,7 @@ class RatingControllerTest {
     void update_WithValidationErrors_ShouldReturnForm() throws Exception {
         
         mockMvc.perform(post("/rating/update/1")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")
@@ -248,6 +257,7 @@ class RatingControllerTest {
 
         
         mockMvc.perform(post("/rating/update/999")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")
@@ -264,10 +274,11 @@ class RatingControllerTest {
         doNothing().when(ratingService).deleteById(1);
 
         
-        mockMvc.perform(post("/rating/delete/1"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rating/list"))
-                .andExpect(flash().attributeExists("successMessage"));
+        mockMvc.perform(post("/rating/delete/1")
+                        .with(csrf()))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/rating/list"))
+                        .andExpect(flash().attributeExists("successMessage"));
 
         verify(ratingService).deleteById(1);
     }
@@ -280,10 +291,11 @@ class RatingControllerTest {
                 .when(ratingService).deleteById(999);
 
         
-        mockMvc.perform(post("/rating/delete/999"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/rating/list"))
-                .andExpect(flash().attributeExists("errorMessage"));
+        mockMvc.perform(post("/rating/delete/999")
+                        .with(csrf()))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/rating/list"))
+                        .andExpect(flash().attributeExists("errorMessage"));
 
         verify(ratingService).deleteById(999);
     }
@@ -296,6 +308,7 @@ class RatingControllerTest {
 
         
         mockMvc.perform(post("/rating/validate")
+                        .with(csrf())
                         .param("moodysRating", "Aaa")
                         .param("sandPRating", "AAA")
                         .param("fitchRating", "AAA")

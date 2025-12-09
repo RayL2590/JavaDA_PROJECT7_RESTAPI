@@ -6,12 +6,17 @@ import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -26,9 +31,11 @@ public class BidListController {
     }
 
     @GetMapping("/list")
-    public String home(Model model) {
+    public String home(Model model, Authentication authentication) {
         List<BidList> bidLists = bidListService.findAll();
         model.addAttribute("bidLists", bidLists);
+        model.addAttribute("currentUsername", authentication.getName());
+        model.addAttribute("currentRoles", authentication.getAuthorities());
         return "bidList/list";
     }
 
@@ -42,28 +49,33 @@ public class BidListController {
     public String validate(@Valid @ModelAttribute BidList bidList,
                           BindingResult result,
                           Model model,
-                          RedirectAttributes ra) {
-        logger.info("Creating BidList: account={}, type={}", bidList.getAccount(), bidList.getType());
+                          RedirectAttributes ra, Principal principal) {
+        logger.info("User {} is attempting to create BidList: account={}, type={}", 
+            principal.getName(), bidList.getAccount(), bidList.getType());
 
-        if (result.hasErrors()) {
-            logger.warn("Validation errors: {}", result.getAllErrors());
-            return "bidList/add";
-        }
+    if (result.hasErrors()) {
+        logger.warn("Validation errors: {}", result.getAllErrors());
+        return "bidList/add";
+    }
 
-        try {
-            BidList saved = bidListService.create(bidList);
-            logger.info("BidList created: ID={}", saved.getBidListId());
-            ra.addFlashAttribute("successMessage", "BidList created successfully");
-            return "redirect:/bidList/list";
-        } catch (ConstraintViolationException e) {
-            logger.error("Constraint violation", e);
-            model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
-            return "bidList/add";
-        } catch (IllegalArgumentException e) {
-            logger.error("Error creating BidList", e);
-            model.addAttribute("errorMessage", e.getMessage());
-            return "bidList/add";
-        }
+    try {
+        bidList.setCreationName(principal.getName());
+
+        BidList saved = bidListService.create(bidList);
+        
+        logger.info("BidList created: ID={} by User={}", saved.getBidListId(), principal.getName());
+        ra.addFlashAttribute("successMessage", "BidList created successfully");
+        return "redirect:/bidList/list";
+
+    } catch (ConstraintViolationException e) {
+        logger.error("Constraint violation", e);
+        model.addAttribute("errorMessage", "Validation error: " + e.getMessage());
+        return "bidList/add";
+    } catch (IllegalArgumentException e) {
+        logger.error("Error creating BidList", e);
+        model.addAttribute("errorMessage", e.getMessage());
+        return "bidList/add";
+    }
     }
 
     @GetMapping("/update/{id}")
@@ -84,10 +96,10 @@ public class BidListController {
 
     @PostMapping("/update/{id}")
     public String updateBid(@PathVariable Integer id,
-                           @Valid @ModelAttribute BidList bidList,
-                           BindingResult result,
-                           Model model,
-                           RedirectAttributes ra) {
+                        @Valid @ModelAttribute BidList bidList,
+                        BindingResult result,
+                        Model model,
+                        RedirectAttributes ra) {
         logger.info("Updating BidList: ID={}", id);
 
         if (result.hasErrors()) {
@@ -97,6 +109,10 @@ public class BidListController {
         }
 
         try {
+            BidList existing = bidListService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("BidList not found"));
+            bidList.setCreationName(existing.getCreationName());
+
             BidList updated = bidListService.update(id, bidList);
             logger.info("BidList updated: ID={}", updated.getBidListId());
             ra.addFlashAttribute("successMessage", "BidList updated successfully");
@@ -115,13 +131,17 @@ public class BidListController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteBid(@PathVariable Integer id, RedirectAttributes ra) {
-        logger.info("Deleting BidList: ID={}", id);
-
+    public String deleteBid(@PathVariable Integer id, 
+                        Model model, 
+                        RedirectAttributes ra,
+                        @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            bidListService.deleteById(id);
-            logger.info("BidList deleted: ID={}", id);
+            bidListService.deleteById(id, userDetails);
+            logger.info("BidList deleted: ID={} by User={}", id, userDetails.getUsername());
             ra.addFlashAttribute("successMessage", "BidList deleted successfully");
+        } catch (AccessDeniedException e) {
+            logger.warn("Unauthorized delete attempt by user {}: {}", userDetails.getUsername(), e.getMessage());
+            ra.addFlashAttribute("errorMessage", "Error: You are not authorized to delete this item.");
         } catch (IllegalArgumentException e) {
             logger.error("Error deleting BidList", e);
             ra.addFlashAttribute("errorMessage", e.getMessage());
