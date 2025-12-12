@@ -38,7 +38,6 @@ import org.springframework.security.web.SecurityFilterChain;
  *    - Si l'utilisateur est bien connecté mais n'a pas les droits d'accès à une ressource (ex : rôle insuffisant), Spring Security renvoie une erreur HTTP 403 (Forbidden).
  *    - Ces erreurs peuvent être personnalisées, mais par défaut elles sont gérées automatiquement par Spring Security.
  */
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {

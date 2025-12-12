@@ -8,23 +8,39 @@
 </head>
 
 <body>
-<div th:fragment="navbar" class="navbar-custom">
-    <div class="container">
-        <div class="row">
-            <div class="col-8">
-                <a href="/bidList/list">Bid List</a>
-                <a href="/curvePoint/list">Curve Points</a>
-                <span th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
-                    <a href="/rating/list">Ratings</a>
-                    <a href="/trade/list">Trade</a>
-                    <a href="/ruleName/list">Rule</a>
-                </span>
+<div th:fragment="navbar">
+    <div class="navbar-custom">
+        <div class="container">
+            <div class="row">
+                <div class="col-8">
+                    <a href="/bidList/list">Bid List</a>
+                    <a href="/curvePoint/list">Curve Points</a>
+
+                    <span th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                        <a href="/rating/list">Ratings</a>
+                        <a href="/trade/list">Trade</a>
+                        <a href="/ruleName/list">Rule</a>
+                        <a href="/user/list">Users</a>
+                    </span>
+                </div>
+
+                <div class="col-4 text-end">
+                    <span>User: <b th:text="${#authentication != null ? #authentication.name : 'Invité'}"></b></span>
+
+                    <form th:action="@{/logout}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-logout">Logout</button>
+                    </form>
+                </div>
             </div>
-            <div class="col-4 text-end">
-                <span>User: <b th:text="${#authentication != null ? #authentication.name : 'Invité'}"></b></span>
-                <form th:action="@{/logout}" method="POST" style="display: inline;">
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
+
+            <div class="mt-3">
+                <div th:if="${successMessage}" class="alert alert-success" role="alert">
+                    <span th:text="${successMessage}"></span>
+                </div>
+
+                <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                </div>
             </div>
         </div>
     </div>

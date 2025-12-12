@@ -24,7 +24,7 @@ class PasswordConstraintValidatorTest {
     @Test
     void passwordTooShort_shouldReturnFalse() {
         assertFalse(validator.isValid("A1!", null));
-        assertFalse(validator.isValid("A1!a", null));
+        assertFalse(validator.isValid("1A1!a12", null));
     }
 
     @Test

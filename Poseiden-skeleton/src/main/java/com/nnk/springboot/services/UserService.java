@@ -1,12 +1,14 @@
 package com.nnk.springboot.services;
 
 import com.nnk.springboot.domain.User;
+import com.nnk.springboot.dto.UserDTO;
 import com.nnk.springboot.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -20,28 +22,49 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserDTO> findAll() {
+        return userRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public User findById(Integer id) {
-        return userRepository.findById(id)
+    public UserDTO findById(Integer id) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
+        return toDTO(user);
     }
 
-    public User createUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public UserDTO createUser(UserDTO userDTO, String rawPassword) {
+        User user = toEntity(userDTO);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        User saved = userRepository.save(user);
+        return toDTO(saved);
     }
 
-    public User updateUser(Integer id, User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+    public UserDTO updateUser(Integer id, UserDTO userDTO, String rawPassword) {
+        User user = toEntity(userDTO);
         user.setId(id);
-        return userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        User saved = userRepository.save(user);
+        return toDTO(saved);
     }
 
     public void deleteUser(Integer id) {
-        User user = findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
         userRepository.delete(user);
+    }
+
+    private UserDTO toDTO(User user) {
+        return new UserDTO(user.getId(), user.getUsername(), user.getFullname(), user.getRole());
+    }
+
+    private User toEntity(UserDTO dto) {
+        User user = new User();
+        user.setId(dto.getId());
+        user.setUsername(dto.getUsername());
+        user.setFullname(dto.getFullname());
+        user.setRole(dto.getRole());
+        return user;
     }
 }

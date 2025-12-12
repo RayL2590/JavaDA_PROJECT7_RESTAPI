@@ -1,6 +1,6 @@
 package com.nnk.springboot.controllers;
 
-import com.nnk.springboot.domain.User;
+import com.nnk.springboot.dto.UserDTO;
 import com.nnk.springboot.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -25,12 +25,8 @@ class UserControllerTest {
 
     @Test
     void home_shouldDisplayUserList() throws Exception {
-        User u1 = new User();
-        u1.setId(1);
-        u1.setUsername("user1");
-        User u2 = new User();
-        u2.setId(2);
-        u2.setUsername("user2");
+        UserDTO u1 = new UserDTO(1, "user1", "User One", "ADMIN");
+        UserDTO u2 = new UserDTO(2, "user2", "User Two", "USER");
         Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u1, u2));
 
         mockMvc.perform(get("/user/list"))
@@ -48,10 +44,8 @@ class UserControllerTest {
 
     @Test
     void validate_shouldRedirectOnSuccess() throws Exception {
-        User u = new User();
-        u.setId(1);
-        u.setUsername("user1");
-        Mockito.when(userService.createUser(Mockito.any(User.class))).thenReturn(u);
+        UserDTO u = new UserDTO(1, "user1", "User One", "ADMIN");
+        Mockito.when(userService.createUser(Mockito.any(UserDTO.class), Mockito.anyString())).thenReturn(u);
         Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u));
 
         mockMvc.perform(post("/user/validate")
@@ -78,24 +72,19 @@ class UserControllerTest {
 
     @Test
     void showUpdateForm_shouldDisplayUpdateForm() throws Exception {
-        User u = new User();
-        u.setId(1);
-        u.setUsername("user1");
-        u.setPassword("");
+        UserDTO u = new UserDTO(1, "user1", "User One", "ADMIN");
         Mockito.when(userService.findById(1)).thenReturn(u);
 
         mockMvc.perform(get("/user/update/1"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("user/update"))
-                .andExpect(model().attributeExists("user"));
+                .andExpect(model().attributeExists("userDTO"));
     }
 
     @Test
     void updateUser_shouldRedirectOnSuccess() throws Exception {
-        User u = new User();
-        u.setId(1);
-        u.setUsername("user1");
-        Mockito.when(userService.updateUser(Mockito.eq(1), Mockito.any(User.class))).thenReturn(u);
+        UserDTO u = new UserDTO(1, "user1", "User One", "ADMIN");
+        Mockito.when(userService.updateUser(Mockito.eq(1), Mockito.any(UserDTO.class), Mockito.anyString())).thenReturn(u);
         Mockito.when(userService.findAll()).thenReturn(Arrays.asList(u));
 
         mockMvc.perform(post("/user/update/1")

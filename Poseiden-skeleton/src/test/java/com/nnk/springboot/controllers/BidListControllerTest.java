@@ -99,7 +99,6 @@ class BidListControllerTest {
         
         when(bidListService.create(any(BidList.class))).thenReturn(validBidList);
 
-        
         mockMvc.perform(post("/bidList/validate")
                 .with(csrf())
                 .param("account", "TestAccount")

@@ -11,7 +11,7 @@
 			<h2>Add New User</h2>
 		</div>
 		<div class="card-body">
-			<form action="#" th:action="@{/user/validate}" th:object="${user}" method="post">
+			<form action="#" th:action="@{/user/validate}" th:object="${userDTO}" method="post">
 				<div class="mb-3">
 					<label for="fullname" class="form-label">Full Name</label>
 					<input type="text" th:field="*{fullname}" id="fullname" placeholder="Full Name" class="form-control">

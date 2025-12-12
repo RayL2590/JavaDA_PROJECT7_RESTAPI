@@ -1,6 +1,6 @@
 package com.nnk.springboot.controllers;
 
-import com.nnk.springboot.domain.User;
+import com.nnk.springboot.dto.UserDTO;
 import com.nnk.springboot.services.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,45 +25,43 @@ public class UserController {
     }
 
     @GetMapping("/user/add")
-    public String addUser(User user) {
+    public String addUser(UserDTO userDTO) {
         return "user/add";
     }
 
     @PostMapping("/user/validate")
-    public String validate(@Valid User user, BindingResult result, Model model) {
-        if (!result.hasErrors()) {
-            try {
-                userService.createUser(user);
-                return "redirect:/user/list";
-            } catch (Exception e) {
-                 model.addAttribute("errorMessage", e.getMessage());
-                 return "user/add";
-            }
+    public String validate(@Valid @ModelAttribute("userDTO") UserDTO userDTO, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            return "user/add";
         }
-        return "user/add";
+        try {
+            userService.createUser(userDTO, userDTO.getPassword());
+            return "redirect:/user/list";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/add";
+        }
     }
 
     @GetMapping("/user/update/{id}")
     public String showUpdateForm(@PathVariable("id") Integer id, Model model) {
-        User user = userService.findById(id);
-        user.setPassword("");
-        model.addAttribute("user", user);
+        UserDTO userDTO = userService.findById(id);
+        model.addAttribute("userDTO", userDTO);
         return "user/update";
     }
 
     @PostMapping("/user/update/{id}")
-    public String updateUser(@PathVariable("id") Integer id, @Valid User user,
+    public String updateUser(@PathVariable("id") Integer id, @Valid @ModelAttribute("userDTO") UserDTO userDTO,
                              BindingResult result, Model model) {
         if (result.hasErrors()) {
             return "user/update";
         }
-        
         try {
-             userService.updateUser(id, user);
-             return "redirect:/user/list";
+            userService.updateUser(id, userDTO, userDTO.getPassword());
+            return "redirect:/user/list";
         } catch (Exception e) {
-             model.addAttribute("errorMessage", e.getMessage());
-             return "user/update";
+            model.addAttribute("errorMessage", e.getMessage());
+            return "user/update";
         }
     }
 
